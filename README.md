@@ -12,31 +12,54 @@ Predict experimental logP values from computational BAR calculations using **≤
 - **Improvement over baseline:** +1.0% R² vs simple y = 0.8645x - 0.1688
 
 ## 📁 Files
+
+**Core:**
 - `logP_calculation.ods` - Source dataset (123 compounds)
 - `read_ods_to_csv.py` - ODS→CSV converter
-- `logP_data_from_ods.csv` - Clean CSV (auto-generated)
-- `model_two_descriptor.py` - 2-descriptor modeling with LinearRegression
 - `requirements.txt` - Python dependencies
-- `tpot/` - Vendored TPOT library (for future AutoML experiments)
+- `tpot/` - Vendored TPOT library
+
+**Modeling Scripts:**
+- `model_two_descriptor.py` - Simple LinearRegression baseline (fast, 2 descriptors)
+- `tpot_full_potential.py` - 🔥 **TPOT FULL POWER** - 100 gen × 100 pop, 3 descriptors + interactions
+
+**Colab Notebooks:**
+- `Colab_Notebook.ipynb` - Basic workflow
+- `Colab_TPOT_Full_Potential.ipynb` - **RECOMMENDED** - Full AutoML with visualizations
 
 ## 🚀 Google Colab Workflow
 
+### Quick Start (Simple LinearRegression)
 ```python
-# 1. Install dependencies
-!pip install -r requirements.txt
-
-# 2. Convert ODS to CSV (creates logP_data_from_ods.csv)
+!git clone https://github.com/burakshahin/Project_Nemuri.git
+%cd Project_Nemuri/Beta
+!pip install pandas scikit-learn matplotlib seaborn odfpy
 !python read_ods_to_csv.py
-
-# 3. Run modeling (generates plots + results.txt)
 !python model_two_descriptor.py
 ```
 
+### 🔥 TPOT Full Potential Mode (RECOMMENDED!)
+```python
+!git clone https://github.com/burakshahin/Project_Nemuri.git
+%cd Project_Nemuri/Beta
+!pip install pandas scikit-learn matplotlib seaborn odfpy tpot
+!python read_ods_to_csv.py
+!python tpot_full_potential.py  # 1-4 hours, 10,000 pipelines!
+```
+
+**OR** use the ready-made notebook: `Colab_TPOT_Full_Potential.ipynb`
+
 ### Outputs
-- `two_descriptor_results.txt` - Performance metrics & feature importance
-- `two_desc_parity.png` - Predicted vs Experimental scatter plot
-- `two_desc_residuals.png` - Residual distribution
-- `two_desc_importance.png` - Permutation importance of 2 descriptors
+
+**Simple Model:**
+- `two_descriptor_results.txt` - Basic metrics
+- `two_desc_*.png` - Basic plots
+
+**TPOT Full Potential:**
+- `tpot_full_results.txt` - Comprehensive analysis with confidence intervals
+- `tpot_full_results.png` - 4-panel publication-ready figure
+- `tpot_best_pipeline.py` - Exportable sklearn pipeline code
+- Bootstrap CI, permutation importance (50 repeats), OOF predictions
 
 ## 📈 Key Insights
 1. **Both descriptors are equally important** (permutation R² drop ~0.44 each)
