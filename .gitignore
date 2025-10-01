@@ -1,0 +1,22 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+
+# Generated outputs (can be regenerated)
+*.png
+two_descriptor_results.txt
+logP_data_from_ods.csv
+logP_data_from_ods_enriched.csv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db

@@ -1,0 +1,6 @@
+pandas
+scikit-learn
+tpot
+matplotlib
+seaborn
+odfpy
