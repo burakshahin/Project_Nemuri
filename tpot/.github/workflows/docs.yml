@@ -1,0 +1,76 @@
+name: Docs Build
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build_docs:
+    runs-on: ubuntu-latest
+    env:
+      GIT_COMMITTER_NAME: "Doc Build Bot"
+      GIT_COMMITTER_EMAIL: "jay-m-dev@users.noreply.github.com"
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.10'
+
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('docs/requirements_docs.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install .
+          pip install -r docs/requirements_docs.txt
+
+      # - name: Convert notebooks to HTML
+      #   # if: ${{ github.event_name == 'push' && contains(github.event.head_commit.modified, 'Tutorial/') && contains(github.event.head_commit.modified, '.ipynb') }}
+      #   run: |
+      #     # jupyter nbconvert --to html --allow-errors --no-input --show-input --template classic --output-dir docs/tutorial Tutorial/*.ipynb
+      #     jupyter nbconvert --to html --allow-errors --template classic --output-dir docs/tutorial Tutorial/*.ipynb
+
+      # - name: Build Tutorial Table of Contents
+      #   run: |
+      #     bash docs/scripts/build_tutorial_toc.sh
+
+      - name: Build Documentation sources
+        run: |
+          bash docs/scripts/build_docs_sources.sh
+
+      - name: Build mkdocs.yml
+        run: |
+          bash docs/scripts/build_mkdocs.sh
+
+      - name: Checkout gh-pages
+        run: |
+          git fetch origin gh-pages
+          git checkout gh-pages || git checkout --orphan gh-pages
+          git pull origin gh-pages || echo "No remote changes to pull"
+          git checkout main # Switch back before continuing
+
+      - name: Build and Deploy Latest Docs
+        run: |
+          mike deploy --push --branch gh-pages latest 
+  
+      - name: Build and Deploy Archived Docs
+        run: |
+          mike deploy --config-file mkdocs_archived.yml --push --branch gh-pages archived
+
+      - name: Set Default Version
+        run: |
+          mike set-default latest --push --branch gh-pages
+
+      - name: Create alias for Latest Docs
+        run: |
+          mike alias latest stable --push --branch gh-pages
