@@ -311,6 +311,13 @@ from tpot import TPOTRegressor
 
 # Configure TPOT for maximum thoroughness
 # Note: Some parameters are passed differently in this TPOT version
+# Detect environment: Google Colab vs Local
+try:
+    import google.colab
+    IN_COLAB = True
+except ImportError:
+    IN_COLAB = False
+
 tpot_config = {
     'generations': 150,  # Maximum generations for exhaustive exploration
     'population_size': 100,  # Large population for maximum diversity
@@ -318,7 +325,7 @@ tpot_config = {
     'random_state': 42,
     'verbose': 2,  # Show progress
     'scorers': ['r2'],  # Optimize for R² score (as list)
-    'n_jobs': 1,  # Use single core to avoid Dask/parallel issues in Colab
+    'n_jobs': 1 if IN_COLAB else -1,  # Single core for Colab, all cores for local
     'max_time_mins': 480,  # 8 hours - maximum thoroughness
     'max_eval_time_mins': 10,  # Allow more time for complex pipelines
     'early_stop': 20,  # More patience before stopping
@@ -329,8 +336,19 @@ print("="*60)
 for key, value in tpot_config.items():
     print(f"{key}: {value}")
 print("="*60)
+
+# Display environment-specific info
+if IN_COLAB:
+    print("\n� ENVIRONMENT: Google Colab")
+    print("   • Using n_jobs=1 (single core) for stability")
+    print("   • Expected runtime: ~14-16 hours")
+else:
+    print("\n📍 ENVIRONMENT: Local Machine")
+    print("   • Using n_jobs=-1 (all available cores)")
+    print("   • Expected runtime: ~2-4 hours (much faster!)")
+    print(f"   • Detected CPU cores: {os.cpu_count()}")
+
 print("\n🚀 MAXIMUM THOROUGHNESS MODE ACTIVATED!")
-print("Expected runtime: ~6-8 hours (480 minutes max)")
 print("This will evaluate 15,000+ pipeline configurations")
 print("With 5-fold CV: ~75,000 total model fits")
 print("\n⚠️  IMPORTANT: This will take a long time!")
