@@ -7,8 +7,12 @@ find the best machine learning pipeline for predicting experimental logP from
 calculated values.
 
 Goals:
-- Improve upon 80% linear regression accuracy
-- Remove 7 identified outliers (SM28, SM32, SM33, SM35, SM36, SM41, SM42)
+- Improve upon 80% linear regression accurac# Display environment-specific info
+print("\n📍 ENVIRONMENT: Local Machine")
+print("   • Using n_jobs=-1 (all available cores)")
+print("   • Using multiprocessing (NOT Dask distributed)")
+print("   • Expected runtime: ~2-4 hours (much faster!)")
+print(f"   • Detected CPU cores: {os.cpu_count()}") 7 identified outliers (SM28, SM32, SM33, SM35, SM36, SM41, SM42)
 - Engineer meaningful molecular descriptors
 - Apply proper cross-validation to prevent overfitting
 - Use TPOT to find optimal preprocessing + model pipeline
@@ -325,10 +329,11 @@ tpot_config = {
     'random_state': 42,
     'verbose': 2,  # Show progress
     'scorers': ['r2'],  # Optimize for R² score (as list)
-    'n_jobs': 1 if IN_COLAB else -1,  # Single core for Colab, all cores for local
+    'n_jobs': -1,  # Use all cores (but no Dask cluster)
     'max_time_mins': 480,  # 8 hours - maximum thoroughness
     'max_eval_time_mins': 10,  # Allow more time for complex pipelines
     'early_stop': 20,  # More patience before stopping
+    'client': None,  # Disable Dask distributed - use multiprocessing instead
 }
 
 print("\nTPOT Configuration:")
