@@ -17,8 +17,21 @@ Configuration:
 - Maximum TPOT settings: 150 generations, 100 population, 480 minutes (8 hours)
 - Expected to achieve 90%+ R² accuracy
 
-Usage:
+Usage - Local:
     python logP_prediction_TPOT_script.py
+
+Usage - Google Colab:
+    1. Clone repository:
+       !git clone https://github.com/burakshahin/Project_Nemuri.git
+       %cd Project_Nemuri/Beta
+    
+    2. Install packages:
+       !pip install -q tpot scikit-learn pandas numpy matplotlib seaborn joblib
+    
+    3. Run script:
+       !python logP_prediction_TPOT_script.py
+       
+    Or copy-paste the entire script into a Colab code cell and run it directly.
 
 Requirements:
     pip install tpot scikit-learn pandas numpy matplotlib seaborn joblib
@@ -54,8 +67,48 @@ print("="*80)
 print("STEP 1: Loading Data")
 print("="*80)
 
+# Check if data file exists
+import os
+
+# For Google Colab: Check if we need to clone the repository
+if not os.path.exists('logP_data_from_ods.csv'):
+    print("\n⚠️  Data file not found in current directory!")
+    print("\nFor Google Colab, run these commands first:")
+    print("!git clone https://github.com/burakshahin/Project_Nemuri.git")
+    print("%cd Project_Nemuri/Beta")
+    print("\nOr upload the file 'logP_data_from_ods.csv' to the current directory.")
+    print("\nTrying to find file in common locations...")
+    
+    # Try common locations
+    possible_paths = [
+        'logP_data_from_ods.csv',
+        '../logP_data_from_ods.csv',
+        'Project_Nemuri/Beta/logP_data_from_ods.csv',
+        '/content/Project_Nemuri/Beta/logP_data_from_ods.csv',
+    ]
+    
+    data_file = None
+    for path in possible_paths:
+        if os.path.exists(path):
+            data_file = path
+            print(f"\n✅ Found data file at: {path}")
+            break
+    
+    if data_file is None:
+        raise FileNotFoundError(
+            "\n❌ Could not find 'logP_data_from_ods.csv'!\n"
+            "\nFor Google Colab:\n"
+            "1. Run: !git clone https://github.com/burakshahin/Project_Nemuri.git\n"
+            "2. Run: %cd Project_Nemuri/Beta\n"
+            "3. Then run this script again\n"
+            "\nOr manually upload the CSV file to the current directory."
+        )
+else:
+    data_file = 'logP_data_from_ods.csv'
+    print(f"✅ Found data file: {data_file}")
+
 # Load the data
-df = pd.read_csv('logP_data_from_ods.csv')
+df = pd.read_csv(data_file)
 
 print(f"Dataset shape: {df.shape}")
 print(f"\nFirst few rows:")
