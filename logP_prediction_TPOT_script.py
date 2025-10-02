@@ -318,11 +318,10 @@ tpot_config = {
     'random_state': 42,
     'verbose': 2,  # Show progress
     'scorers': ['r2'],  # Optimize for R² score (as list)
-    'n_jobs': 1,  # Use single core to avoid Dask issues in Colab
+    'n_jobs': 1,  # Use single core to avoid Dask/parallel issues in Colab
     'max_time_mins': 480,  # 8 hours - maximum thoroughness
     'max_eval_time_mins': 10,  # Allow more time for complex pipelines
     'early_stop': 20,  # More patience before stopping
-    'use_dask': False,  # Disable Dask to avoid worker errors
 }
 
 print("\nTPOT Configuration:")
