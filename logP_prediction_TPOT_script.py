@@ -310,13 +310,14 @@ print("="*80)
 from tpot import TPOTRegressor
 
 # Configure TPOT for maximum thoroughness
+# Note: Some parameters are passed differently in this TPOT version
 tpot_config = {
     'generations': 150,  # Maximum generations for exhaustive exploration
     'population_size': 100,  # Large population for maximum diversity
     'cv': 5,  # 5-fold cross-validation
     'random_state': 42,
-    'verbose': 2,  # Show progress (correct parameter name)
-    'scoring': 'r2',  # Optimize for R² score
+    'verbose': 2,  # Show progress
+    'scorers': ['r2'],  # Optimize for R² score (as list)
     'n_jobs': -1,  # Use all available cores
     'max_time_mins': 480,  # 8 hours - maximum thoroughness
     'max_eval_time_mins': 10,  # Allow more time for complex pipelines
