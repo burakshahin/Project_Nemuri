@@ -335,7 +335,7 @@ except ImportError:
 # CRITICAL: This version of TPOT has Dask issues even with client=None
 # Solution: Use n_jobs=1 for stability, with optimized parameters for single-core
 tpot_config = {
-    'generations': 100,  # Reduced for single-core efficiency (still very thorough)
+    'generations': 75,  # Reduced to 75 for faster completion
     'population_size': 50,  # Reduced for single-core efficiency
     'cv': 5,  # 5-fold cross-validation
     'random_state': 42,
