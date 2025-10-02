@@ -315,7 +315,7 @@ tpot_config = {
     'population_size': 100,  # Large population for maximum diversity
     'cv': 5,  # 5-fold cross-validation
     'random_state': 42,
-    'verbosity': 2,  # Show progress
+    'verbose': 2,  # Show progress (correct parameter name)
     'scoring': 'r2',  # Optimize for R² score
     'n_jobs': -1,  # Use all available cores
     'max_time_mins': 480,  # 8 hours - maximum thoroughness
