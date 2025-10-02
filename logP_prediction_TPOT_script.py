@@ -310,7 +310,7 @@ print("="*60)
 
 # Cross-validation score
 cv_scores = cross_val_score(baseline_model, X_train, y_train, cv=5, 
-                            scoring='r2', n_jobs=-1)
+                            scoring='r2', n_jobs=1)
 print(f"\nCross-validation R² scores: {cv_scores}")
 print(f"Mean CV R²: {cv_scores.mean():.4f} (+/- {cv_scores.std() * 2:.4f})")
 
@@ -360,7 +360,7 @@ if IN_COLAB:
     print("   • Expected runtime: ~14-16 hours")
 else:
     print("\n📍 ENVIRONMENT: Local Machine")
-    print("   • Using n_jobs=-1 (all available cores)")
+    print("   • Using n_jobs=1 (all available cores)")
     print("   • Expected runtime: ~2-4 hours (much faster!)")
     print(f"   • Detected CPU cores: {os.cpu_count()}")
 
@@ -435,7 +435,7 @@ cv_results = cross_validate(
     cv=5,
     scoring=['r2', 'neg_mean_squared_error', 'neg_mean_absolute_error'],
     return_train_score=True,
-    n_jobs=-1
+    n_jobs=1
 )
 
 print("\n" + "="*60)
