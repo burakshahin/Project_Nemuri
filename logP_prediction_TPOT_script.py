@@ -7,12 +7,22 @@ find the best machine learning pipeline for predicting experimental logP from
 calculated values.
 
 Goals:
-- Improve upon 80% linear regression accurac# Display environment-specific info
+- Improve upon 80% linear regression accurac# Dis# Display environment-specific info
 print("\n📍 ENVIRONMENT: Local Machine")
-print("   • Using n_jobs=-1 (all available cores)")
-print("   • Using multiprocessing (NOT Dask distributed)")
-print("   • Expected runtime: ~2-4 hours (much faster!)")
-print(f"   • Detected CPU cores: {os.cpu_count()}") 7 identified outliers (SM28, SM32, SM33, SM35, SM36, SM41, SM42)
+print("   • Using n_jobs=1 (single core for stability)")
+print("   • Dask distributed disabled to avoid timeout errors")
+print("   • Expected runtime: ~4-6 hours (optimized for single-core)")
+print(f"   • Detected CPU cores: {os.cpu_count()} (parallel disabled due to Dask compatibility)")
+
+print("\n🚀 OPTIMIZED THOROUGHNESS MODE ACTIVATED!")
+print("Configuration: 100 generations × 50 population = 5,000 pipelines")
+print("With 5-fold CV: ~25,000 total model fits")
+print("(Optimized parameters for stable single-core execution)")nt-specific info
+print("\n📍 ENVIRONMENT: Local Machine")
+print("   • Using n_jobs=1 (single core for stability)")
+print("   • Dask distributed disabled to avoid timeout errors")
+print("   • Expected runtime: ~6-10 hours (slower but stable)")
+print(f"   • Detected CPU cores: {os.cpu_count()} (parallel processing disabled due to Dask issues)") 7 identified outliers (SM28, SM32, SM33, SM35, SM36, SM41, SM42)
 - Engineer meaningful molecular descriptors
 - Apply proper cross-validation to prevent overfitting
 - Use TPOT to find optimal preprocessing + model pipeline
@@ -322,18 +332,19 @@ try:
 except ImportError:
     IN_COLAB = False
 
+# CRITICAL: This version of TPOT has Dask issues even with client=None
+# Solution: Use n_jobs=1 for stability, with optimized parameters for single-core
 tpot_config = {
-    'generations': 150,  # Maximum generations for exhaustive exploration
-    'population_size': 100,  # Large population for maximum diversity
+    'generations': 100,  # Reduced for single-core efficiency (still very thorough)
+    'population_size': 50,  # Reduced for single-core efficiency
     'cv': 5,  # 5-fold cross-validation
     'random_state': 42,
     'verbose': 2,  # Show progress
     'scorers': ['r2'],  # Optimize for R² score (as list)
-    'n_jobs': -1,  # Use all cores (but no Dask cluster)
-    'max_time_mins': 480,  # 8 hours - maximum thoroughness
+    'n_jobs': 1,  # Single core to avoid Dask issues (stable but slower)
+    'max_time_mins': 360,  # 6 hours - realistic for single-core
     'max_eval_time_mins': 10,  # Allow more time for complex pipelines
-    'early_stop': 20,  # More patience before stopping
-    'client': None,  # Disable Dask distributed - use multiprocessing instead
+    'early_stop': 15,  # Adjusted for smaller population
 }
 
 print("\nTPOT Configuration:")
