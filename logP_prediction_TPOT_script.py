@@ -622,29 +622,154 @@ y_all_pred = tpot.fitted_pipeline_.predict(X_all)
 
 # Add predictions to dataframe
 df_results = df_features[['MNSol_id', 'Name', 'BAR_logP', 'Exp_logP']].copy()
-df_results['Predicted_logP'] = y_all_pred
-df_results['Prediction_Error'] = df_results['Exp_logP'] - df_results['Predicted_logP']
+df_results['Predicted_logP_TPOT'] = y_all_pred
+df_results['Prediction_Error'] = df_results['Exp_logP'] - df_results['Predicted_logP_TPOT']
 df_results['Absolute_Error'] = np.abs(df_results['Prediction_Error'])
+df_results['Percent_Error'] = (df_results['Absolute_Error'] / np.abs(df_results['Exp_logP']) * 100)
+
+# Add baseline predictions for comparison
+df_results['Predicted_logP_Baseline'] = baseline_model.predict(X_all)
+df_results['Baseline_Error'] = df_results['Exp_logP'] - df_results['Predicted_logP_Baseline']
+df_results['Baseline_Absolute_Error'] = np.abs(df_results['Baseline_Error'])
+
+# Calculate improvement
+df_results['Improvement'] = df_results['Baseline_Absolute_Error'] - df_results['Absolute_Error']
+df_results['TPOT_Better'] = df_results['Improvement'] > 0
 
 # Sort by absolute error
 df_results_sorted = df_results.sort_values('Absolute_Error')
 
 print("\n" + "="*80)
-print("BEST PREDICTIONS (Top 10 with lowest error)")
+print("BEST PREDICTIONS (Top 15 with lowest error)")
 print("="*80)
-print(df_results_sorted.head(10).to_string(index=False))
+best_15 = df_results_sorted.head(15)[['MNSol_id', 'Name', 'Exp_logP', 'Predicted_logP_TPOT', 'Absolute_Error', 'Percent_Error']]
+print(best_15.to_string(index=False))
 
 print("\n" + "="*80)
-print("WORST PREDICTIONS (Top 10 with highest error)")
+print("WORST PREDICTIONS (Top 15 with highest error)")
 print("="*80)
-print(df_results_sorted.tail(10).to_string(index=False))
+worst_15 = df_results_sorted.tail(15)[['MNSol_id', 'Name', 'Exp_logP', 'Predicted_logP_TPOT', 'Absolute_Error', 'Percent_Error']]
+print(worst_15.to_string(index=False))
 
-# Save results
-df_results_sorted.to_csv('logP_predictions_detailed.csv', index=False)
-print("\n✅ Detailed predictions saved to 'logP_predictions_detailed.csv'")
+print("\n" + "="*80)
+print("LARGEST IMPROVEMENTS OVER BASELINE (TPOT vs Baseline)")
+print("="*80)
+improvements = df_results_sorted.sort_values('Improvement', ascending=False).head(10)[
+    ['MNSol_id', 'Name', 'Exp_logP', 'Predicted_logP_Baseline', 'Predicted_logP_TPOT', 'Improvement']
+]
+print(improvements.to_string(index=False))
+
+# Save comprehensive results
+df_results_sorted.to_csv('logP_predictions_comprehensive.csv', index=False)
+print("\n✅ Comprehensive predictions saved to 'logP_predictions_comprehensive.csv'")
+
+# Create a summary statistics table
+summary_stats = pd.DataFrame({
+    'Metric': ['Count', 'Mean Absolute Error', 'Std Dev of Errors', 'Max Error', 'Min Error', 
+               'RMSE', 'Mean Percent Error (%)', 'R² Score'],
+    'TPOT Model': [
+        len(df_results),
+        df_results['Absolute_Error'].mean(),
+        df_results['Absolute_Error'].std(),
+        df_results['Absolute_Error'].max(),
+        df_results['Absolute_Error'].min(),
+        np.sqrt(mean_squared_error(df_results['Exp_logP'], df_results['Predicted_logP_TPOT'])),
+        df_results['Percent_Error'].mean(),
+        r2_score(df_results['Exp_logP'], df_results['Predicted_logP_TPOT'])
+    ],
+    'Baseline Model': [
+        len(df_results),
+        df_results['Baseline_Absolute_Error'].mean(),
+        df_results['Baseline_Absolute_Error'].std(),
+        df_results['Baseline_Absolute_Error'].max(),
+        df_results['Baseline_Absolute_Error'].min(),
+        np.sqrt(mean_squared_error(df_results['Exp_logP'], df_results['Predicted_logP_Baseline'])),
+        (df_results['Baseline_Absolute_Error'] / np.abs(df_results['Exp_logP']) * 100).mean(),
+        r2_score(df_results['Exp_logP'], df_results['Predicted_logP_Baseline'])
+    ]
+})
+
+print("\n" + "="*80)
+print("SUMMARY STATISTICS TABLE")
+print("="*80)
+print(summary_stats.to_string(index=False))
+summary_stats.to_csv('logP_summary_statistics.csv', index=False)
+print("\n✅ Summary statistics saved to 'logP_summary_statistics.csv'")
 
 # ============================================================================
-# 14. FINAL SUMMARY
+# 14. CREATE APPLICATION-READY TABLES
+# ============================================================================
+print("\n\n" + "="*80)
+print("STEP 14: Creating Application-Ready Tables")
+print("="*80)
+
+# 1. Model Comparison Table
+model_comparison = pd.DataFrame({
+    'Model': ['Ridge Baseline', 'TPOT Optimized'],
+    'R² Score': [r2_baseline, r2_tpot],
+    'RMSE': [rmse_baseline, rmse_tpot],
+    'MAE': [mae_baseline, mae_tpot],
+    'Training Time': ['< 1 second', 'Hours (genetic search)'],
+    'Complexity': ['Low', 'Medium-High'],
+    'Interpretability': ['High', 'Medium']
+})
+print("\n" + "="*60)
+print("MODEL COMPARISON TABLE")
+print("="*60)
+print(model_comparison.to_string(index=False))
+model_comparison.to_csv('model_comparison.csv', index=False)
+print("\n✅ Model comparison saved to 'model_comparison.csv'")
+
+# 2. Feature Engineering Summary Table
+feature_engineering_summary = pd.DataFrame({
+    'Feature': feature_columns,
+    'Type': ['Original', 'Original', 'Original', 
+             'Energy-based', 'Energy-based', 'Energy-based',
+             'Non-linear', 'Non-linear', 'Non-linear',
+             'Log Transform', 'Log Transform',
+             'Partition Indicator', 'Partition Indicator',
+             'Interaction', 'Linear Correction', 'Deviation',
+             'Normalized', 'Binary', 'Binary']
+})
+print("\n" + "="*60)
+print("FEATURE ENGINEERING SUMMARY")
+print("="*60)
+print(feature_engineering_summary.to_string(index=False))
+feature_engineering_summary.to_csv('feature_engineering_summary.csv', index=False)
+print("\n✅ Feature summary saved to 'feature_engineering_summary.csv'")
+
+# 3. Prediction Quality Categories
+df_results['Quality'] = pd.cut(
+    df_results['Absolute_Error'],
+    bins=[0, 0.1, 0.3, 0.5, float('inf')],
+    labels=['Excellent (<0.1)', 'Good (0.1-0.3)', 'Fair (0.3-0.5)', 'Poor (>0.5)']
+)
+quality_distribution = df_results['Quality'].value_counts().reset_index()
+quality_distribution.columns = ['Prediction Quality', 'Count']
+quality_distribution['Percentage'] = (quality_distribution['Count'] / len(df_results) * 100).round(2)
+print("\n" + "="*60)
+print("PREDICTION QUALITY DISTRIBUTION")
+print("="*60)
+print(quality_distribution.to_string(index=False))
+quality_distribution.to_csv('prediction_quality_distribution.csv', index=False)
+print("\n✅ Quality distribution saved to 'prediction_quality_distribution.csv'")
+
+# 4. Ready-to-Use Prediction Table (Clean Format)
+prediction_table = df_results[['MNSol_id', 'Name', 'Exp_logP', 'Predicted_logP_TPOT', 'Absolute_Error', 'Quality']].copy()
+prediction_table.columns = ['Molecule ID', 'Name', 'Experimental logP', 'Predicted logP', 'Absolute Error', 'Quality']
+prediction_table = prediction_table.sort_values('Absolute Error')
+prediction_table.to_csv('prediction_table_clean.csv', index=False)
+print("\n✅ Clean prediction table saved to 'prediction_table_clean.csv'")
+
+# 5. Full Dataset with All Features (for further analysis)
+full_analysis_data = df_features.copy()
+full_analysis_data['Predicted_logP_TPOT'] = y_all_pred
+full_analysis_data['Predicted_logP_Baseline'] = baseline_model.predict(X_all)
+full_analysis_data.to_csv('full_analysis_dataset.csv', index=False)
+print("✅ Full dataset with all features saved to 'full_analysis_dataset.csv'")
+
+# ============================================================================
+# 15. FINAL SUMMARY
 # ============================================================================
 print("\n\n" + "="*80)
 print("FINAL SUMMARY AND RECOMMENDATIONS")
@@ -669,7 +794,14 @@ print(f"   Training samples: {len(X_train)}")
 print(f"   Test samples: {len(X_test)}")
 print(f"   Features engineered: {len(feature_columns)}")
 
-print(f"\n📈 RECOMMENDATIONS FOR FURTHER IMPROVEMENT:")
+# Count prediction qualities
+quality_counts = df_results['Quality'].value_counts()
+print(f"\n📈 PREDICTION QUALITY BREAKDOWN:")
+for quality, count in quality_counts.items():
+    percentage = count / len(df_results) * 100
+    print(f"   {quality}: {count} ({percentage:.1f}%)")
+
+print(f"\n💡 RECOMMENDATIONS FOR FURTHER IMPROVEMENT:")
 print("""
    1. ✅ MAXIMUM TPOT (150 gen, 100 pop, 480 min) - Already configured!
    2. ✅ This is the most thorough configuration possible!
@@ -691,12 +823,56 @@ print("✅ Analysis complete! All results and models saved.")
 print("="*80)
 
 print("\n📁 OUTPUT FILES CREATED:")
-print("   • logP_prediction_results.png - Visualization plots")
-print("   • feature_importance.png - Feature importance chart (if available)")
-print("   • tpot_logP_pipeline.py - Exportable Python pipeline")
-print("   • tpot_logP_model.pkl - Trained model (pickle)")
-print("   • logP_predictions_detailed.csv - All predictions with errors")
+print("\n📊 DATA TABLES (Ready to use in Excel/analysis):")
+print("   ✅ prediction_table_clean.csv - Clean prediction table")
+print("   ✅ logP_predictions_comprehensive.csv - All predictions with detailed errors")
+print("   ✅ logP_summary_statistics.csv - Summary statistics comparison")
+print("   ✅ model_comparison.csv - Model performance comparison")
+print("   ✅ feature_engineering_summary.csv - Feature descriptions")
+print("   ✅ prediction_quality_distribution.csv - Quality breakdown")
+print("   ✅ full_analysis_dataset.csv - Complete dataset with all features")
+
+print("\n📈 VISUALIZATIONS:")
+print("   ✅ logP_prediction_results.png - 4-panel visualization")
+print("   ✅ feature_importance.png - Feature importance chart (if available)")
+
+print("\n🤖 MODELS & PIPELINES:")
+print("   ✅ tpot_logP_pipeline.py - Exportable Python pipeline code")
+print("   ✅ tpot_logP_model.pkl - Trained TPOT model (pickle)")
 
 print("\n" + "="*80)
-print("Script execution completed successfully!")
+print("🎉 Script execution completed successfully!")
 print("="*80)
+
+print("\n📖 HOW TO USE THE OUTPUT FILES:")
+print("""
+1. PREDICTION TABLE (prediction_table_clean.csv):
+   → Open in Excel/Sheets for quick review of predictions
+   → Sorted by error (best predictions first)
+   → Includes quality labels for easy filtering
+
+2. COMPREHENSIVE RESULTS (logP_predictions_comprehensive.csv):
+   → Full comparison: TPOT vs Baseline vs Experimental
+   → Shows which model performed better for each molecule
+   → Use for detailed error analysis
+
+3. MODEL COMPARISON (model_comparison.csv):
+   → Side-by-side comparison of all metrics
+   → Use to report final results
+
+4. QUALITY DISTRIBUTION (prediction_quality_distribution.csv):
+   → Shows how many predictions are Excellent/Good/Fair/Poor
+   → Use for quality assurance reporting
+
+5. FULL DATASET (full_analysis_dataset.csv):
+   → All engineered features included
+   → Use for custom analysis or re-training
+
+6. TRAINED MODEL (tpot_logP_model.pkl):
+   → Load with: joblib.load('tpot_logP_model.pkl')
+   → Use for making new predictions
+
+7. PIPELINE CODE (tpot_logP_pipeline.py):
+   → Standalone Python code of best pipeline
+   → Use to integrate into your own scripts
+""")
